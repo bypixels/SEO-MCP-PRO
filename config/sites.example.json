@@ -1,0 +1,38 @@
+{
+  "sites": [
+    {
+      "id": "example-site",
+      "name": "Example Website",
+      "url": "https://example.com",
+      "google": {
+        "analytics": {
+          "propertyId": "123456789"
+        },
+        "searchConsole": {
+          "siteUrl": "https://example.com/"
+        },
+        "tagManager": {
+          "accountId": "1234567",
+          "containerId": "GTM-XXXXX",
+          "workspaceId": "1"
+        },
+        "ads": {
+          "customerId": "123-456-7890"
+        },
+        "businessProfile": {
+          "accountId": "1234567890",
+          "locationId": "0987654321"
+        }
+      },
+      "cloudflare": {
+        "zoneId": "your-zone-id"
+      },
+      "defaults": {
+        "dateRange": {
+          "preset": "30d"
+        },
+        "timezone": "America/New_York"
+      }
+    }
+  ]
+}

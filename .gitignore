@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Cache
+.cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Credentials (NEVER commit these)
+*.json.key
+*-key.json
+service-account*.json
+credentials.json
+.website-ops-credentials.enc
+get-token.js
+get-token.cjs
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+.mcp.json

@@ -1,0 +1,63 @@
+{
+  "name": "website-ops-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for website operations - Google Marketing, SEO, Performance, Security & Monitoring",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "website-ops-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup && mkdir -p dist/ui && cp src/dashboard/ui/index.html dist/ui/index.html",
+    "start": "node dist/index.js",
+    "dashboard": "DASHBOARD_ENABLED=true node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "google-analytics",
+    "google-tag-manager",
+    "search-console",
+    "seo",
+    "website-monitoring",
+    "pagespeed"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.7.7",
+    "bottleneck": "^2.19.5",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "google-ads-api": "^17.0.0",
+    "google-auth-library": "^9.14.0",
+    "googleapis": "^140.0.0",
+    "winston": "^3.15.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "eslint": "^9.11.0",
+    "globals": "^17.2.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

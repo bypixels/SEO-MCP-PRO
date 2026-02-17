@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Ops Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface-2: #242836;
+    --border: #2e3348;
+    --text: #e4e6f0;
+    --text-muted: #8b8fa3;
+    --good: #22c55e;
+    --good-bg: rgba(34,197,94,0.1);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245,158,11,0.1);
+    --poor: #ef4444;
+    --poor-bg: rgba(239,68,68,0.1);
+    --accent: #6366f1;
+    --accent-bg: rgba(99,102,241,0.1);
+    --radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .header h1 { font-size: 18px; font-weight: 600; white-space: nowrap; }
+  .header h1 em { color: var(--accent); font-style: normal; }
+
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; }
+  .nav-btn { padding: 6px 16px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; }
+  .nav-btn:hover { color: var(--text); background: var(--surface-2); }
+  .nav-btn.active { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
+
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .header-right input { padding: 6px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-size: 12px; width: 160px; outline: none; }
+
+  /* Search form */
+  .search-bar { display: flex; gap: 8px; flex: 1; max-width: 500px; min-width: 250px; }
+  .search-bar input { flex: 1; padding: 8px 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar button { padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .search-bar button:hover { opacity: 0.9; }
+  .search-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Pages */
+  .page { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* Shared */
+  .loading { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+  .loading .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { background: var(--poor-bg); border: 1px solid var(--poor); border-radius: var(--radius); padding: 16px 20px; color: var(--poor); margin-bottom: 24px; }
+  .success-msg { background: var(--good-bg); border: 1px solid var(--good); border-radius: var(--radius); padding: 16px 20px; color: var(--good); margin-bottom: 24px; }
+  .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }
+  .empty-state h2 { font-size: 24px; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 15px; }
+  .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  /* Dashboard */
+  .overall { text-align: center; margin-bottom: 32px; }
+  .overall .score-ring { width: 140px; height: 140px; margin: 0 auto 12px; }
+  .overall .score-ring circle { fill: none; stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+  .overall .score-ring .bg { stroke: var(--border); }
+  .overall .score-ring .fg { transition: stroke-dashoffset 0.8s ease; }
+  .timestamp { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card .card-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .card-score { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .card .score-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .card .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .cwv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 32px; }
+  .cwv-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .cwv-card .cwv-name { font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
+  .cwv-card .cwv-value { font-size: 24px; font-weight: 700; }
+  .cwv-card .cwv-badge { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
+  .badge-good { background: var(--good-bg); color: var(--good); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn); }
+  .badge-poor { background: var(--poor-bg); color: var(--poor); }
+  .issues-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+  .issues-table th { text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .issues-table td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .issues-table tr:hover { background: var(--surface-2); }
+  .priority-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+  .priority-critical { background: var(--poor-bg); color: var(--poor); }
+  .priority-high { background: rgba(249,115,22,0.1); color: #f97316; }
+  .priority-medium { background: var(--warn-bg); color: var(--warn); }
+  .priority-low { background: var(--accent-bg); color: var(--accent); }
+  .category-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--surface-2); color: var(--text-muted); }
+  .rec-list { list-style: none; margin-bottom: 32px; }
+  .rec-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+  .rec-item .rec-text { font-size: 14px; line-height: 1.5; }
+  .rec-item .rec-area { font-weight: 600; margin-right: 4px; }
+
+  /* Settings page */
+  .settings-group { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+  .settings-group h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .settings-group .group-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+  .field label .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .field label .status-dot.on { background: var(--good); }
+  .field label .status-dot.off { background: var(--border); }
+  .field input { width: 100%; padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-family: monospace; outline: none; }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: #4a4e6a; }
+  .settings-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-danger { background: transparent; border: 1px solid var(--poor); color: var(--poor); }
+  .btn-danger:hover { background: var(--poor-bg); }
+  .btn-secondary { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-secondary:hover { color: var(--text); }
+
+  /* Auth status banner */
+  .auth-banner { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+  .auth-banner .auth-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .auth-banner .auth-icon.ok { background: var(--good-bg); }
+  .auth-banner .auth-icon.warn { background: var(--warn-bg); }
+  .auth-banner .auth-icon.none { background: var(--surface-2); }
+  .auth-banner .auth-info { flex: 1; }
+  .auth-banner .auth-method { font-weight: 600; font-size: 14px; }
+  .auth-banner .auth-detail { font-size: 12px; color: var(--text-muted); }
+
+  @media (max-width: 768px) {
+    .header { flex-direction: column; align-items: stretch; }
+    .search-bar { max-width: 100%; min-width: 0; }
+    .header-right { margin-left: 0; }
+    .page { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><em>Website Ops</em> Dashboard</h1>
+  <div class="nav">
+    <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+    <button class="nav-btn" data-page="settings">Settings</button>
+  </div>
+  <form class="search-bar" id="searchForm">
+    <input type="url" id="urlInput" placeholder="https://example.com" required>
+    <button type="submit" id="analyzeBtn">Analyze</button>
+  </form>
+  <div class="header-right">
+    <input type="password" id="apiKeyInput" placeholder="Dashboard API Key">
+  </div>
+</div>
+
+<!-- Dashboard Page -->
+<div class="page active" id="page-dashboard">
+  <div id="dashboardContent">
+    <div class="empty-state">
+      <h2>Enter a URL to analyze</h2>
+      <p>Get performance, SEO, security, and accessibility insights</p>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Page -->
+<div class="page" id="page-settings">
+  <h2 class="section-title">API Credentials</h2>
+  <p style="color:var(--text-muted);margin-bottom:20px;margin-top:-8px">
+    Configure your API keys. Credentials are encrypted and stored locally. They are used by both Claude Code (MCP) and the Dashboard.
+  </p>
+  <div id="authBanner"></div>
+  <div id="settingsFeedback"></div>
+  <div id="settingsGroups">
+    <div class="loading"><div class="spinner"></div><p>Loading credential schema...</p></div>
+  </div>
+  <div class="settings-actions" id="settingsActions" style="display:none">
+    <button class="btn btn-primary" id="saveCredentialsBtn">Save All</button>
+    <button class="btn btn-secondary" id="validateCredentialsBtn">Validate</button>
+    <button class="btn btn-danger" id="clearCredentialsBtn">Clear All</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // --- Shared ---
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const savedKey = localStorage.getItem('dashboard_api_key');
+  if (savedKey) apiKeyInput.value = savedKey;
+  apiKeyInput.addEventListener('change', () => localStorage.setItem('dashboard_api_key', apiKeyInput.value));
+
+  function authHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    const k = apiKeyInput.value.trim();
+    if (k) h['Authorization'] = 'Bearer ' + k;
+    return h;
+  }
+
+  function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+  function scoreColor(s) { return s >= 80 ? 'var(--good)' : s >= 50 ? 'var(--warn)' : 'var(--poor)'; }
+  function ratingBadge(r) { return r === 'good' ? { c:'badge-good', t:'Good' } : r === 'poor' ? { c:'badge-poor', t:'Poor' } : { c:'badge-warn', t:'Needs Improvement' }; }
+
+  // --- Navigation ---
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('page-' + btn.dataset.page).classList.add('active');
+      if (btn.dataset.page === 'settings') loadSettings();
+    });
+  });
+
+  // --- Dashboard ---
+  const dashboardContent = document.getElementById('dashboardContent');
+  const searchForm = document.getElementById('searchForm');
+  const urlInput = document.getElementById('urlInput');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+
+  searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = urlInput.value.trim();
+    if (!url) return;
+
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing...';
+    dashboardContent.innerHTML = '<div class="loading"><div class="spinner"></div><p>Analyzing ' + esc(url) + '...</p><p style="font-size:12px;margin-top:8px">This may take 30-60 seconds</p></div>';
+
+    try {
+      const res = await fetch('/api/dashboard?url=' + encodeURIComponent(url), { headers: authHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({ error: res.statusText })); throw new Error(e.error || 'Failed'); }
+      renderDashboard(await res.json());
+    } catch (err) {
+      dashboardContent.innerHTML = '<div class="error-msg">Error: ' + esc(err.message) + '</div>';
+    } finally {
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = 'Analyze';
+    }
+  });
+
+  function renderDashboard(data) {
+    const color = scoreColor(data.overallScore);
+    const circ = 2 * Math.PI * 60;
+    const off = circ - (data.overallScore / 100) * circ;
+    let h = '';
+
+    h += '<div class="overall">';
+    h += '<svg class="score-ring" viewBox="0 0 140 140"><circle class="bg" cx="70" cy="70" r="60"/>';
+    h += '<circle class="fg" cx="70" cy="70" r="60" stroke="' + color + '" stroke-dasharray="' + circ + '" stroke-dashoffset="' + off + '"/></svg>';
+    h += '<div style="font-size:36px;font-weight:700;color:' + color + ';margin-top:-90px;position:relative">' + data.overallScore + '</div>';
+    h += '<div style="height:40px"></div>';
+    h += '<div style="color:var(--text-muted);font-size:14px">' + esc(data.url) + '</div>';
+    h += '<div class="timestamp">Generated: ' + new Date(data.generatedAt).toLocaleString() + '</div></div>';
+
+    if (data.scores?.length) {
+      h += '<div class="cards">';
+      for (const c of data.scores) { const cl = scoreColor(c.score); h += '<div class="card"><div class="card-label">' + esc(c.label) + '</div><div class="card-score" style="color:' + cl + '">' + c.score + '</div><div class="score-bar"><div class="score-bar-fill" style="width:' + c.score + '%;background:' + cl + '"></div></div></div>'; }
+      h += '</div>';
+    }
+
+    if (data.coreWebVitals?.length) {
+      h += '<h2 class="section-title">Core Web Vitals</h2><div class="cwv-grid">';
+      for (const c of data.coreWebVitals) { const b = ratingBadge(c.rating); h += '<div class="cwv-card"><span class="cwv-name">' + esc(c.name) + '</span><span class="cwv-value">' + c.value + esc(c.unit) + '</span><span class="cwv-badge ' + b.c + '">' + b.t + '</span></div>'; }
+      h += '</div>';
+    }
+
+    if (data.issues?.length) {
+      h += '<h2 class="section-title">Issues (' + data.issues.length + ')</h2>';
+      h += '<table class="issues-table"><thead><tr><th>Priority</th><th>Category</th><th>Issue</th></tr></thead><tbody>';
+      for (const i of data.issues) h += '<tr><td><span class="priority-badge priority-' + i.priority + '">' + i.priority + '</span></td><td><span class="category-badge">' + esc(i.category) + '</span></td><td>' + esc(i.message) + '</td></tr>';
+      h += '</tbody></table>';
+    }
+
+    if (data.recommendations?.length) {
+      h += '<h2 class="section-title">Recommendations</h2><ul class="rec-list">';
+      for (const r of data.recommendations) h += '<li class="rec-item"><span class="priority-badge priority-' + r.priority + '">' + r.priority + '</span><div class="rec-text"><span class="rec-area">' + esc(r.area) + ':</span> ' + esc(r.recommendation) + '</div></li>';
+      h += '</ul>';
+    }
+
+    dashboardContent.innerHTML = h;
+  }
+
+  // --- Settings ---
+  let schema = null;
+  let credStatus = null;
+
+  async function loadSettings() {
+    const groupsEl = document.getElementById('settingsGroups');
+    const actionsEl = document.getElementById('settingsActions');
+    const bannerEl = document.getElementById('authBanner');
+
+    try {
+      const [schemaRes, credRes] = await Promise.all([
+        fetch('/api/settings/schema', { headers: authHeaders() }),
+        fetch('/api/settings/credentials', { headers: authHeaders() }),
+      ]);
+
+      if (!schemaRes.ok || !credRes.ok) {
+        const err = !schemaRes.ok ? await schemaRes.json().catch(() => ({})) : await credRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to load settings');
+      }
+
+      schema = await schemaRes.json();
+      const credData = await credRes.json();
+      credStatus = credData.credentials;
+
+      // Auth banner
+      const auth = credData.auth;
+      let iconCls = 'none', iconTxt = '?', methodTxt = 'No authentication', detailTxt = 'Configure credentials below';
+      if (auth.isAuthenticated) {
+        iconCls = 'ok'; iconTxt = '\u2713';
+        methodTxt = auth.method === 'service-account' ? 'Service Account' : auth.method === 'oauth' ? 'OAuth 2.0' : auth.method;
+        detailTxt = auth.details?.email || auth.details?.scopes?.length + ' scopes' || 'Authenticated';
+      } else if (auth.method !== 'none') {
+        iconCls = 'warn'; iconTxt = '!';
+        methodTxt = 'Configured but not authenticated';
+        detailTxt = 'Check your credentials';
+      }
+      const apiKeysInfo = 'API Keys: PageSpeed ' + (auth.apiKeys.pagespeed ? '\u2713' : '\u2717') + ' | Safe Browsing ' + (auth.apiKeys.safeBrowsing ? '\u2713' : '\u2717');
+
+      bannerEl.innerHTML = '<div class="auth-banner"><div class="auth-icon ' + iconCls + '">' + iconTxt + '</div><div class="auth-info"><div class="auth-method">' + esc(methodTxt) + '</div><div class="auth-detail">' + esc(detailTxt) + ' &middot; ' + esc(apiKeysInfo) + '</div></div></div>';
+
+      // Render groups
+      let html = '';
+      for (const group of schema.groups) {
+        html += '<div class="settings-group"><h3>' + esc(group.label) + '</h3>';
+        html += '<div class="group-desc">' + esc(group.description) + '</div>';
+        for (const key of group.keys) {
+          const s = schema.schema[key];
+          if (!s) continue;
+          const configured = credStatus[key];
+          const dotCls = configured ? 'on' : 'off';
+          const inputType = s.secret ? 'password' : 'text';
+          html += '<div class="field">';
+          html += '<label><span class="status-dot ' + dotCls + '"></span>' + esc(s.label) + '</label>';
+          html += '<input type="' + inputType + '" name="' + key + '" placeholder="' + esc(configured ? '(configured - enter new value to update)' : s.envVar) + '" data-key="' + key + '">';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+      groupsEl.innerHTML = html;
+      actionsEl.style.display = 'flex';
+    } catch (err) {
+      groupsEl.innerHTML = '<div class="error-msg">Error: ' + esc(err.message) + '</div>';
+    }
+  }
+
+  // Save credentials
+  document.getElementById('saveCredentialsBtn').addEventListener('click', async () => {
+    const feedback = document.getElementById('settingsFeedback');
+    const btn = document.getElementById('saveCredentialsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    feedback.innerHTML = '';
+
+    const inputs = document.querySelectorAll('#settingsGroups input[data-key]');
+    const creds = {};
+    let count = 0;
+    inputs.forEach(inp => {
+      if (inp.value.trim()) {
+        creds[inp.dataset.key] = inp.value.trim();
+        count++;
+      }
+    });
+
+    if (count === 0) {
+      feedback.innerHTML = '<div class="error-msg">No credentials entered. Fill in at least one field.</div>';
+      btn.disabled = false;
+      btn.textContent = 'Save All';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/settings/credentials', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(creds),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+
+      feedback.innerHTML = '<div class="success-msg">' + esc(data.message) + ' (' + count + ' credential' + (count > 1 ? 's' : '') + ')</div>';
+      // Clear inputs and reload
+      inputs.forEach(inp => inp.value = '');
+      await loadSettings();
+    } catch (err) {
+      feedback.innerHTML = '<div class="error-msg">Error: ' + esc(err.message) + '</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save All';
+    }
+  });
+
+  // Validate
+  document.getElementById('validateCredentialsBtn').addEventListener('click', async () => {
+    const feedback = document.getElementById('settingsFeedback');
+    const btn = document.getElementById('validateCredentialsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Validating...';
+
+    try {
+      const res = await fetch('/api/settings/credentials/validate', {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Validation failed');
+
+      let html = '<div class="settings-group" style="margin-top:0"><h3>Validation Results</h3><div style="margin-top:12px">';
+      for (const [group, result] of Object.entries(data.validation)) {
+        const icon = result.working ? '\u2705' : result.configured ? '\u26a0\ufe0f' : '\u274c';
+        html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">';
+        html += '<span>' + icon + '</span>';
+        html += '<strong>' + esc(group.replace(/_/g, ' ')) + '</strong>';
+        html += '<span style="color:var(--text-muted);margin-left:auto;font-size:13px">' + esc(result.message) + '</span>';
+        html += '</div>';
+      }
+      html += '</div></div>';
+      feedback.innerHTML = html;
+    } catch (err) {
+      feedback.innerHTML = '<div class="error-msg">Error: ' + esc(err.message) + '</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Validate';
+    }
+  });
+
+  // Clear all
+  document.getElementById('clearCredentialsBtn').addEventListener('click', async () => {
+    if (!confirm('Remove all stored credentials? This cannot be undone.')) return;
+    const feedback = document.getElementById('settingsFeedback');
+
+    try {
+      const res = await fetch('/api/settings/credentials/clear', {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Clear failed');
+
+      feedback.innerHTML = '<div class="success-msg">' + esc(data.message) + '</div>';
+      await loadSettings();
+    } catch (err) {
+      feedback.innerHTML = '<div class="error-msg">Error: ' + esc(err.message) + '</div>';
+    }
+  });
+})();
+</script>
+</body>
+</html>
