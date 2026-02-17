@@ -1,12 +1,25 @@
 {
-  "name": "website-ops-mcp",
+  "name": "seo-mcp-pro",
   "version": "0.1.0",
-  "description": "MCP server for website operations - Google Marketing, SEO, Performance, Security & Monitoring",
+  "description": "MCP server for website operations - Google Marketing, SEO, Performance, Security & Monitoring. 121 tools for Claude.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "website-ops-mcp": "dist/index.js"
+    "seo-mcp-pro": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bypixels/SEO-MCP-PRO.git"
+  },
+  "homepage": "https://github.com/bypixels/SEO-MCP-PRO#readme",
+  "bugs": {
+    "url": "https://github.com/bypixels/SEO-MCP-PRO/issues"
   },
   "scripts": {
     "build": "tsup && mkdir -p dist/ui && cp src/dashboard/ui/index.html dist/ui/index.html",
@@ -23,15 +36,23 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "claude",
+    "seo",
     "google-analytics",
     "google-tag-manager",
     "search-console",
-    "seo",
+    "google-ads",
+    "pagespeed",
+    "core-web-vitals",
+    "lighthouse",
     "website-monitoring",
-    "pagespeed"
+    "security-audit",
+    "accessibility",
+    "cloudflare",
+    "ai-tools"
   ],
-  "author": "",
+  "author": "bypixels",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"

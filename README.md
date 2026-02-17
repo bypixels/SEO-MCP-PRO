@@ -1,22 +1,24 @@
 # SEO MCP PRO
 
+[![npm version](https://img.shields.io/npm/v/seo-mcp-pro.svg)](https://www.npmjs.com/package/seo-mcp-pro)
+[![CI](https://github.com/bypixels/SEO-MCP-PRO/actions/workflows/ci.yml/badge.svg)](https://github.com/bypixels/SEO-MCP-PRO/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
 
-A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that provides Claude with **70+ tools** for website operations, Google Marketing, SEO, performance analysis, security auditing, monitoring, accessibility testing, and more.
+A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that provides Claude with **121 tools** for website operations, Google Marketing, SEO, performance analysis, security auditing, monitoring, accessibility testing, and more.
 
 ---
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Features](#features)
-- [Tool Modules](#tool-modules)
+- [Free vs Pro](#free-vs-pro)
 - [Quick Start](#quick-start)
+- [Tool Modules](#tool-modules)
 - [Configuration](#configuration)
 - [Claude Desktop Integration](#claude-desktop-integration)
-- [Web Dashboard](#web-dashboard)
+- [Web Dashboard (Pro)](#web-dashboard-pro)
 - [Dashboard REST API](#dashboard-rest-api)
 - [Architecture](#architecture)
 - [Commands](#commands)
@@ -27,26 +29,83 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that p
 
 ## Overview
 
-`website-ops-mcp` is a comprehensive MCP server built with TypeScript in strict mode. It connects Claude to the full spectrum of website management tasks -- from Google Analytics reporting and Tag Manager configuration to SSL analysis, Core Web Vitals monitoring, and WCAG accessibility audits.
+`seo-mcp-pro` is a comprehensive MCP server built with TypeScript in strict mode. It connects Claude to the full spectrum of website management tasks -- from Google Analytics reporting and Tag Manager configuration to SSL analysis, Core Web Vitals monitoring, and WCAG accessibility audits.
 
-- **109 source files**, approximately **22,000 lines** of TypeScript
+- **121 tools** across 17 modules
 - Zero external runtime frameworks -- uses `node:http` for the optional dashboard
-- Built-in credential management with **AES-256-GCM** encryption
+- Built-in credential management with **AES-256-GCM** encryption (Pro)
 - Per-service rate limiting and in-memory caching
 
 ---
 
-## Features
+## Free vs Pro
 
-- **Google Marketing Suite** -- GA4, GTM, Search Console, Ads, Business Profile, Indexing API
-- **Performance Analysis** -- PageSpeed Insights, Core Web Vitals (LCP, INP, CLS), CrUX, Lighthouse
-- **Security Auditing** -- SSL/TLS analysis, HTTP security headers, Google Safe Browsing checks
-- **SEO Technical** -- Robots.txt, sitemaps, canonicals, redirects, structured data, meta tags, headings
-- **Monitoring** -- Uptime checks, response time, DNS lookup and propagation, certificate expiry
-- **Accessibility** -- WCAG compliance audits, contrast ratio checking, image alt text validation
-- **Cloudflare Integration** -- DNS management, analytics, cache purging, firewall event monitoring
-- **Automated Reports** -- Site health, SEO audit, executive summary
-- **Optional Web Dashboard** -- Self-contained HTML UI with credential management, served on port 3737
+SEO MCP PRO follows a hybrid open source model. The core MCP tools are **free and open source**. Advanced reporting, the web dashboard, and credential management require a **Pro license**.
+
+| Feature | Free | Pro |
+|---|:---:|:---:|
+| Google Analytics 4 (GA4) tools | Yes | Yes |
+| Google Tag Manager (GTM) tools | Yes | Yes |
+| Google Search Console (GSC) tools | Yes | Yes |
+| Google Ads tools | Yes | Yes |
+| Google Business Profile tools | Yes | Yes |
+| Indexing API tools | Yes | Yes |
+| PageSpeed Insights / Lighthouse | Yes | Yes |
+| Core Web Vitals / CrUX | Yes | Yes |
+| Security auditing (SSL, headers, Safe Browsing) | Yes | Yes |
+| SEO technical (robots, sitemaps, canonicals, etc.) | Yes | Yes |
+| Monitoring (uptime, DNS, certificates) | Yes | Yes |
+| Accessibility (WCAG, contrast, images) | Yes | Yes |
+| Cloudflare integration | Yes | Yes |
+| Utilities (tech detection, broken links, WHOIS) | Yes | Yes |
+| Dashboard overview tool | Yes | Yes |
+| **Site Health Report** (`report_site_health`) | -- | Yes |
+| **SEO Audit Report** (`report_seo_audit`) | -- | Yes |
+| **Executive Summary** (`report_executive_summary`) | -- | Yes |
+| **Web Dashboard** (browser UI on port 3737) | -- | Yes |
+| **Encrypted Credential Store** (AES-256-GCM) | -- | Yes |
+| **SSE Real-time Monitoring** | -- | Yes |
+
+### Activating Pro
+
+Set your license key as an environment variable:
+
+```bash
+SEO_MCP_PRO_KEY=SMCP-XXXX-XXXX-XXXX-XXXX
+```
+
+Or add it to your `.env` file. The server logs the active tier on startup.
+
+---
+
+## Quick Start
+
+### Install from npm
+
+```bash
+# Run directly with npx (no install needed)
+npx seo-mcp-pro
+
+# Or install globally
+npm install -g seo-mcp-pro
+seo-mcp-pro
+```
+
+### Install from source
+
+```bash
+git clone https://github.com/bypixels/SEO-MCP-PRO.git
+cd SEO-MCP-PRO
+pnpm install
+pnpm build
+pnpm start
+```
+
+### Development
+
+```bash
+pnpm dev         # Development mode with hot reload
+```
 
 ---
 
@@ -76,39 +135,15 @@ The server organizes its tools into 17 modules spanning 14 core categories:
 
 ---
 
-## Quick Start
-
-### Prerequisites
-
-- **Node.js** 20 or later (LTS recommended)
-- **pnpm** package manager
-
-### Installation
-
-```bash
-git clone https://github.com/bypixels/SEO-MCP-PRO.git
-cd SEO-MCP-PRO
-pnpm install
-```
-
-### Build and Run
-
-```bash
-pnpm build       # Compile TypeScript (ESM + CJS + DTS via tsup)
-pnpm start       # Start the MCP server (stdio transport)
-```
-
-### Development
-
-```bash
-pnpm dev         # Development mode with hot reload
-```
-
----
-
 ## Configuration
 
 All configuration is handled through environment variables. Create a `.env` file in the project root:
+
+### SEO MCP PRO License
+
+| Variable | Description |
+|---|---|
+| `SEO_MCP_PRO_KEY` | Pro license key (`SMCP-XXXX-XXXX-XXXX-XXXX`) |
 
 ### Google OAuth 2.0
 
@@ -148,7 +183,7 @@ All configuration is handled through environment variables. Create a `.env` file
 | `CLOUDFLARE_EMAIL` | Cloudflare account email (legacy auth) |
 | `CLOUDFLARE_API_KEY` | Cloudflare global API key (legacy auth) |
 
-### Dashboard
+### Dashboard (Pro)
 
 | Variable | Description | Default |
 |---|---|---|
@@ -166,9 +201,26 @@ Add the server to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "website-ops": {
+    "seo-mcp-pro": {
+      "command": "npx",
+      "args": ["-y", "seo-mcp-pro"],
+      "env": {
+        "GOOGLE_PAGESPEED_API_KEY": "your-api-key",
+        "SEO_MCP_PRO_KEY": "SMCP-XXXX-XXXX-XXXX-XXXX"
+      }
+    }
+  }
+}
+```
+
+Or if installed from source:
+
+```json
+{
+  "mcpServers": {
+    "seo-mcp-pro": {
       "command": "node",
-      "args": ["/path/to/website-ops-mcp/dist/index.js"],
+      "args": ["/path/to/SEO-MCP-PRO/dist/index.js"],
       "env": {
         "GOOGLE_CLIENT_ID": "your-client-id",
         "GOOGLE_CLIENT_SECRET": "your-client-secret",
@@ -180,19 +232,19 @@ Add the server to your `claude_desktop_config.json`:
 }
 ```
 
-Once configured, Claude will have access to all 70+ tools. Ask Claude to analyze your website's performance, check SEO issues, audit security headers, or manage your Google Marketing stack -- all through natural language.
+Once configured, Claude will have access to all available tools. Ask Claude to analyze your website's performance, check SEO issues, audit security headers, or manage your Google Marketing stack -- all through natural language.
 
 ---
 
-## Web Dashboard
+## Web Dashboard (Pro)
 
-The server includes an optional self-contained web dashboard for browser-based access to all tools and reports.
+The server includes an optional self-contained web dashboard for browser-based access to all tools and reports. **Requires a Pro license.**
 
 ```bash
-pnpm dashboard    # Start with dashboard enabled
+SEO_MCP_PRO_KEY=SMCP-... pnpm dashboard
 ```
 
-Or set `DASHBOARD_ENABLED=true` in your `.env` file and run `pnpm start`.
+Or set `DASHBOARD_ENABLED=true` and `SEO_MCP_PRO_KEY` in your `.env` file and run `pnpm start`.
 
 The dashboard is available at `http://localhost:3737` and provides:
 
@@ -206,7 +258,7 @@ The dashboard is available at `http://localhost:3737` and provides:
 
 ## Dashboard REST API
 
-When the dashboard is enabled, the following HTTP endpoints are available:
+When the dashboard is enabled (Pro), the following HTTP endpoints are available:
 
 ### Health and Status
 
@@ -250,6 +302,9 @@ When the dashboard is enabled, the following HTTP endpoints are available:
 src/
 ├── index.ts                  # Entry point
 ├── server.ts                 # MCP server setup and tool registration
+├── licensing/                # License management (free vs pro)
+│   ├── index.ts              # Key validation, isPro(), getLicenseTier()
+│   └── tiers.ts              # Pro tool and feature definitions
 ├── auth/                     # Authentication layer
 │   ├── oauth.ts              # Google OAuth 2.0 flow
 │   ├── service-account.ts    # Service account authentication
@@ -264,7 +319,7 @@ src/
 │   ├── integrations/         # Cloudflare
 │   ├── utilities/            # Screenshots, tech detection, broken links
 │   └── reports/              # Site health, SEO audit, executive summary
-├── dashboard/                # Optional HTTP dashboard
+├── dashboard/                # Optional HTTP dashboard (Pro)
 │   ├── http-server.ts        # node:http server (zero frameworks)
 │   ├── routes/               # API, SSE, and settings route handlers
 │   ├── services/             # Credential store (AES-256-GCM), data orchestration
@@ -293,9 +348,9 @@ src/
 | Command | Description |
 |---|---|
 | `pnpm install` | Install dependencies |
-| `pnpm build` | Build with tsup (ESM + CJS + DTS) |
+| `pnpm build` | Build with tsup (ESM) |
 | `pnpm start` | Run the MCP server (stdio transport) |
-| `pnpm dashboard` | Run with web dashboard enabled |
+| `pnpm dashboard` | Run with web dashboard enabled (Pro) |
 | `pnpm dev` | Development mode with hot reload |
 | `pnpm test` | Run tests with vitest |
 | `pnpm lint` | Lint with ESLint |

@@ -6,6 +6,8 @@
  */
 
 import { ToolDefinition, ToolRegistry } from '../types/tools.js';
+import { isPro } from '../licensing/index.js';
+import { isProTool } from '../licensing/tiers.js';
 
 /** Global tool registry */
 export const toolRegistry: ToolRegistry = new Map();
@@ -19,17 +21,34 @@ export function registerTool<TInput, TOutput>(tool: ToolDefinition<TInput, TOutp
 }
 
 /**
- * Get a tool by name
+ * Get a tool by name (respects license tier)
  */
 export function getTool(name: string): ToolDefinition | undefined {
-  return toolRegistry.get(name);
+  const tool = toolRegistry.get(name);
+  if (!tool) return undefined;
+
+  if (isProTool(name) && !isPro()) {
+    return undefined;
+  }
+
+  return tool;
 }
 
 /**
- * Get all tools
+ * Check if a tool is blocked by license tier.
+ * Returns true if the tool exists but requires Pro.
+ */
+export function isToolProGated(name: string): boolean {
+  return toolRegistry.has(name) && isProTool(name) && !isPro();
+}
+
+/**
+ * Get all tools (filtered by license tier)
  */
 export function getAllTools(): ToolDefinition[] {
-  return Array.from(toolRegistry.values());
+  const tools = Array.from(toolRegistry.values());
+  if (isPro()) return tools;
+  return tools.filter((t) => !isProTool(t.name));
 }
 
 /**

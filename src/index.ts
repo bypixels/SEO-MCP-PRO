@@ -10,6 +10,7 @@ import 'dotenv/config';
 import { startServer } from './server.js';
 import { logger } from './utils/logger.js';
 import { cacheClear } from './utils/cache.js';
+import { getLicenseInfo } from './licensing/index.js';
 
 // Handle uncaught errors
 process.on('uncaughtException', (error) => {
@@ -32,8 +33,8 @@ async function gracefulShutdown(signal: string) {
 
   logger.info(`Received ${signal}, shutting down...`);
 
-  // Stop dashboard if running
-  if (process.env.DASHBOARD_ENABLED === 'true') {
+  // Stop dashboard if running (only started for Pro users)
+  if (process.env.DASHBOARD_ENABLED === 'true' && getLicenseInfo().tier === 'pro') {
     try {
       const { stopDashboard } = await import('./dashboard/index.js');
       await stopDashboard();
@@ -57,7 +58,18 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 // Start the server
 async function main() {
   try {
-    logger.info('Starting Website Ops MCP Server...');
+    const license = getLicenseInfo();
+    logger.info(`SEO MCP PRO — License tier: ${license.tier.toUpperCase()}`, {
+      tier: license.tier,
+      hasKey: !!license.key,
+    });
+
+    if (license.tier === 'free') {
+      logger.info(
+        'Running in FREE mode. Pro reports and dashboard are disabled. Get a license at https://github.com/bypixels/SEO-MCP-PRO'
+      );
+    }
+
     await startServer();
   } catch (error) {
     logger.error('Failed to start server', {

@@ -17,14 +17,15 @@ import { createServiceLogger } from './utils/logger.js';
 import { rateLimiter } from './utils/rate-limiter.js';
 import { cacheStats } from './utils/cache.js';
 import { MCPError, ErrorCode } from './types/errors.js';
-import { registerAllTools, getAllTools, getTool } from './tools/index.js';
+import { registerAllTools, getAllTools, getTool, isToolProGated } from './tools/index.js';
 import { zodToJsonSchema } from './utils/schema.js';
+import { isPro } from './licensing/index.js';
 
 const log = createServiceLogger('server');
 
 /** Server metadata */
 const SERVER_INFO = {
-  name: 'website-ops-mcp',
+  name: 'seo-mcp-pro',
   version: '0.1.0',
   description:
     'MCP server for website operations - Google Marketing, SEO, Performance, Security & Monitoring',
@@ -36,13 +37,14 @@ const SERVER_INFO = {
 export async function createServer(): Promise<Server> {
   log.info('Creating MCP server...', SERVER_INFO);
 
-  // Load stored credentials before auth initialization
-  // This makes user-saved keys available to both MCP and Dashboard
-  try {
-    const { loadStoredCredentials } = await import('./dashboard/index.js');
-    loadStoredCredentials();
-  } catch {
-    // Dashboard module not available — no stored credentials
+  // Load stored credentials before auth initialization (Pro only)
+  if (isPro()) {
+    try {
+      const { loadStoredCredentials } = await import('./dashboard/index.js');
+      loadStoredCredentials();
+    } catch {
+      // Dashboard module not available — no stored credentials
+    }
   }
 
   // Initialize authentication
@@ -173,6 +175,23 @@ function registerToolHandlers(server: Server): void {
         }
 
         default: {
+          // Check if tool is Pro-gated
+          if (isToolProGated(name)) {
+            return {
+              content: [
+                {
+                  type: 'text' as const,
+                  text: JSON.stringify({
+                    error: 'PRO_LICENSE_REQUIRED',
+                    message: `The tool "${name}" requires an SEO MCP PRO license. Get yours at https://github.com/bypixels/SEO-MCP-PRO`,
+                    tool: name,
+                  }, null, 2),
+                },
+              ],
+              isError: true,
+            };
+          }
+
           // Route to registered tool handlers
           const tool = getTool(name);
           if (!tool) {
@@ -451,10 +470,16 @@ export async function startServer(): Promise<void> {
 
   log.info('MCP server running');
 
-  // Optionally start the web dashboard
+  // Optionally start the web dashboard (Pro only)
   if (process.env.DASHBOARD_ENABLED === 'true') {
-    const { startDashboard } = await import('./dashboard/index.js');
-    await startDashboard();
+    if (isPro()) {
+      const { startDashboard } = await import('./dashboard/index.js');
+      await startDashboard();
+    } else {
+      log.warn(
+        'Dashboard requires an SEO MCP PRO license. Get yours at https://github.com/bypixels/SEO-MCP-PRO'
+      );
+    }
   }
 }
 
